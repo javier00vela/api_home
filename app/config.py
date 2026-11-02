@@ -18,9 +18,14 @@ class Settings:
     groq_api_key = os.getenv("GROQ_API_KEY")
     cohere_api_key = os.getenv("COHERE_API_KEY")
     max_output_tokens = 600
+    request_timeout = int(os.getenv("REQUEST_TIMEOUT", "120"))
     host = os.getenv("APP_HOST", "0.0.0.0")
     port = int(os.getenv("APP_PORT", "8000"))
     debug = os.getenv("FLASK_ENV", "development") == "development"
+
+    @property
+    def request_timeout_ms(self) -> int:
+        return self.request_timeout * 1000
 
     @property
     def system_prompt(self) -> str:

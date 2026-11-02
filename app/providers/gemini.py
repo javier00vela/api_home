@@ -10,7 +10,10 @@ class GeminiProvider(ChatProvider):
 
     def __init__(self) -> None:
         self.client = (
-            genai.Client(api_key=settings.gemini_api_key)
+            genai.Client(
+                api_key=settings.gemini_api_key,
+                http_options={"timeout": settings.request_timeout_ms},
+            )
             if settings.gemini_api_key
             else None
         )

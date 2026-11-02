@@ -8,7 +8,11 @@ class GroqProvider(ChatProvider):
     name = "groq"
 
     def __init__(self) -> None:
-        self.client = Groq(api_key=settings.groq_api_key) if settings.groq_api_key else None
+        self.client = (
+            Groq(api_key=settings.groq_api_key, timeout=settings.request_timeout, max_retries=0)
+            if settings.groq_api_key
+            else None
+        )
 
     def is_available(self) -> bool:
         return self.client is not None

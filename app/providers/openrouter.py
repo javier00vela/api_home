@@ -12,6 +12,8 @@ class OpenRouterProvider(ChatProvider):
             OpenAI(
                 base_url="https://openrouter.ai/api/v1",
                 api_key=settings.openrouter_api_key,
+                timeout=settings.request_timeout,
+                max_retries=0,
             )
             if settings.openrouter_api_key
             else None

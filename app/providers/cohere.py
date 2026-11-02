@@ -9,7 +9,10 @@ class CohereProvider(ChatProvider):
 
     def __init__(self) -> None:
         self.client = (
-            cohere.ClientV2(api_key=settings.cohere_api_key)
+            cohere.ClientV2(
+                api_key=settings.cohere_api_key,
+                timeout=settings.request_timeout,
+            )
             if settings.cohere_api_key
             else None
         )
