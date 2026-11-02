@@ -3,6 +3,17 @@ from dataclasses import dataclass, field
 from typing import Any
 
 
+def contenido_valido(data: Any) -> bool:
+    if data is None:
+        return False
+    if isinstance(data, str):
+        texto = data.strip()
+        return bool(texto) and texto.lower() not in {"null", "none", "undefined"}
+    if isinstance(data, (list, tuple, dict)):
+        return bool(data)
+    return True
+
+
 @dataclass
 class ServiceResult:
     ok: bool
@@ -37,6 +48,8 @@ class ChatProvider(BaseService):
                 system_prompt=payload["system_prompt"],
                 model=payload["model"],
             )
+            if not contenido_valido(texto):
+                return ServiceResult(ok=False, error="respuesta vacía o nula")
             return ServiceResult(
                 ok=True,
                 data=texto,

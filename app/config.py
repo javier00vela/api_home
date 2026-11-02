@@ -34,23 +34,42 @@ class Settings:
         )
 
 
-def load_fallback_chain() -> list[dict]:
+def _read_models_file() -> dict:
     if not MODELS_FILE.exists():
-        raise FileNotFoundError(f"No se encontró el archivo de modelos: {MODELS_FILE}")
-
+        return {"fallback": []}
     with MODELS_FILE.open(encoding="utf-8") as fh:
         data = json.load(fh)
+    if isinstance(data, list):
+        return {"fallback": data}
+    if isinstance(data, dict):
+        return data
+    return {"fallback": []}
 
-    cadena = data.get("fallback") if isinstance(data, dict) else data
-    if not isinstance(cadena, list) or not cadena:
-        raise ValueError("models.json debe incluir una lista 'fallback' con al menos un modelo.")
+
+def load_fallback_chain() -> list[dict]:
+    data = _read_models_file()
+    cadena = data.get("fallback") or []
+    if not isinstance(cadena, list):
+        return []
 
     normalizada = []
     for item in cadena:
-        if not isinstance(item, dict) or "proveedor" not in item or "nombre" not in item:
-            raise ValueError("Cada modelo debe tener 'proveedor' y 'nombre'.")
-        normalizada.append({"proveedor": item["proveedor"], "nombre": item["nombre"]})
+        if isinstance(item, dict) and item.get("proveedor") and item.get("nombre"):
+            normalizada.append({"proveedor": item["proveedor"], "nombre": item["nombre"]})
     return normalizada
+
+
+def save_fallback_chain(cadena: list[dict], extra: dict | None = None) -> None:
+    data = _read_models_file()
+    data["fallback"] = [
+        {"proveedor": item["proveedor"], "nombre": item["nombre"]} for item in cadena
+    ]
+    if extra:
+        data.update(extra)
+    MODELS_FILE.parent.mkdir(parents=True, exist_ok=True)
+    with MODELS_FILE.open("w", encoding="utf-8") as fh:
+        json.dump(data, fh, indent=2, ensure_ascii=False)
+        fh.write("\n")
 
 
 settings = Settings()

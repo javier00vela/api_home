@@ -1,5 +1,5 @@
 from app.config import load_fallback_chain, settings
-from app.core.base import ServiceResult
+from app.core.base import ServiceResult, contenido_valido
 from app.core.registry import ServiceRegistry
 
 
@@ -81,6 +81,51 @@ class Orchestrator:
             "system_prompt": settings.system_prompt,
         }
 
+        resultado = self._try_chain(cadena, payload_base, directo)
+        if resultado[1] == 200:
+            return resultado
+        errores = resultado[0].get("failed_attempts", [])
+
+        if directo:
+            return resultado
+
+        refresh = self.invoke("openrouter_catalog", "sync_free_text_models", {})
+        if not refresh.ok:
+            errores.append(f"openrouter_catalog: {refresh.error}")
+            return {
+                "status": "error",
+                "detail": "Ningún modelo local respondió y no se pudo actualizar el catálogo de OpenRouter.",
+                "failed_attempts": errores,
+            }, 500
+
+        ya_probados = {(item["proveedor"], item["nombre"]) for item in cadena}
+        nuevos = [item for item in (refresh.data or []) if (item["proveedor"], item["nombre"]) not in ya_probados][:12]
+        if not nuevos:
+            return {
+                "status": "error",
+                "detail": "OpenRouter no trajo modelos de texto gratuitos nuevos para reintentar.",
+                "failed_attempts": errores,
+            }, 500
+
+        reintento = self._try_chain(nuevos, payload_base, directo=False, refreshed=True)
+        if reintento[1] == 200:
+            return reintento
+
+        errores.extend(reintento[0].get("failed_attempts", []))
+        return {
+            "status": "error",
+            "detail": "Fallaron los modelos locales y también los de texto gratuitos de OpenRouter.",
+            "failed_attempts": errores,
+        }, 500
+
+    def _try_chain(
+        self,
+        cadena: list[dict],
+        payload_base: dict,
+        directo: bool,
+        refreshed: bool = False,
+    ) -> tuple[dict, int]:
+        errores = []
         for item in cadena:
             proveedor = item["proveedor"]
             modelo = item["nombre"]
@@ -89,15 +134,16 @@ class Orchestrator:
                 "chat",
                 {**payload_base, "model": modelo},
             )
-            if result.ok:
+            if result.ok and contenido_valido(result.data):
                 return {
                     "status": "success",
                     "model": f"{proveedor}/{modelo}",
-                    "mode": "direct" if directo else "fallback",
+                    "mode": "openrouter-refresh" if refreshed else ("direct" if directo else "fallback"),
                     "response": result.data,
                 }, 200
-            if result.error:
-                errores.append(f"{proveedor}/{modelo}: {result.error}")
+            errores.append(
+                f"{proveedor}/{modelo}: {result.error or 'respuesta vacía o nula'}"
+            )
 
         detalle = (
             "El modelo indicado no pudo resolver la solicitud."
