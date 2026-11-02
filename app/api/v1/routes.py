@@ -1,6 +1,7 @@
 from flask import Blueprint, jsonify, request
 
 from app.auth import require_token
+from app.config import load_fallback_chain
 from app.core.orchestrator import Orchestrator
 from app.core.registry import registry
 
@@ -31,6 +32,7 @@ def list_services():
                     "capabilities": sorted(service.capabilities),
                 }
                 for service in registry.all()
-            ]
+            ],
+            "fallback": load_fallback_chain(),
         }
     )

@@ -1,9 +1,14 @@
+import json
 import os
 from datetime import datetime
+from pathlib import Path
 
 from dotenv import load_dotenv
 
 load_dotenv()
+
+ROOT_DIR = Path(__file__).resolve().parent.parent
+MODELS_FILE = Path(os.getenv("MODELS_FILE", ROOT_DIR / "models.json"))
 
 
 class Settings:
@@ -28,18 +33,23 @@ class Settings:
         )
 
 
-# Cadena de respaldo: cada servicio nuevo se registra aquí sin tocar las rutas.
-FALLBACK_CHAIN = [
-    {"proveedor": "gemini", "nombre": "gemini-3.5-flash-lite"},
-    {"proveedor": "gemini", "nombre": "gemini-3.5-flash"},
-    {"proveedor": "openrouter", "nombre": "openai/gpt-4o-mini:online"},
-    {"proveedor": "openrouter", "nombre": "deepseek/deepseek-chat:online"},
-    {"proveedor": "openrouter", "nombre": "perplexity/sonar-small-32k"},
-    {"proveedor": "cohere", "nombre": "command-r-plus-08-2024"},
-    {"proveedor": "cohere", "nombre": "command-r"},
-    {"proveedor": "groq", "nombre": "openai/gpt-oss-20b"},
-    {"proveedor": "groq", "nombre": "openai/gpt-oss-120b"}
-]
+def load_fallback_chain() -> list[dict]:
+    if not MODELS_FILE.exists():
+        raise FileNotFoundError(f"No se encontró el archivo de modelos: {MODELS_FILE}")
+
+    with MODELS_FILE.open(encoding="utf-8") as fh:
+        data = json.load(fh)
+
+    cadena = data.get("fallback") if isinstance(data, dict) else data
+    if not isinstance(cadena, list) or not cadena:
+        raise ValueError("models.json debe incluir una lista 'fallback' con al menos un modelo.")
+
+    normalizada = []
+    for item in cadena:
+        if not isinstance(item, dict) or "proveedor" not in item or "nombre" not in item:
+            raise ValueError("Cada modelo debe tener 'proveedor' y 'nombre'.")
+        normalizada.append({"proveedor": item["proveedor"], "nombre": item["nombre"]})
+    return normalizada
 
 
 settings = Settings()

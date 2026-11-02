@@ -1,4 +1,4 @@
-from app.config import FALLBACK_CHAIN, settings
+from app.config import load_fallback_chain, settings
 from app.core.base import ServiceResult
 from app.core.registry import ServiceRegistry
 
@@ -13,7 +13,7 @@ def parse_model_ref(spec: str, registry: ServiceRegistry) -> dict | None:
         if registry.get(proveedor) and modelo:
             return {"proveedor": proveedor, "nombre": modelo}
 
-    for item in FALLBACK_CHAIN:
+    for item in load_fallback_chain():
         if item["nombre"] == valor:
             return item
     return None
@@ -21,7 +21,7 @@ def parse_model_ref(spec: str, registry: ServiceRegistry) -> dict | None:
 
 def resolve_chain(model_param, registry: ServiceRegistry) -> tuple[list[dict] | None, str | None]:
     if model_param is None or model_param == "":
-        return FALLBACK_CHAIN, None
+        return load_fallback_chain(), None
 
     specs = model_param if isinstance(model_param, list) else [model_param]
     cadena = []

@@ -1,0 +1,40 @@
+{
+  "fallback": [
+    {
+      "proveedor": "gemini",
+      "nombre": "gemini-3.5-flash-lite"
+    },
+    {
+      "proveedor": "gemini",
+      "nombre": "gemini-3.5-flash"
+    },
+    {
+      "proveedor": "openrouter",
+      "nombre": "nvidia/nemotron-3.5-super-vl:free"
+    },
+    {
+      "proveedor": "openrouter",
+      "nombre": "nvidia/nemotron-3-nano-omni-30b-a3b-reasoning:free"
+    },
+    {
+      "proveedor": "openrouter",
+      "nombre": "cohere/north-mini-code:free"
+    },
+    {
+      "proveedor": "cohere",
+      "nombre": "command-r-plus-08-2024"
+    },
+    {
+      "proveedor": "cohere",
+      "nombre": "command-r"
+    },
+    {
+      "proveedor": "groq",
+      "nombre": "openai/gpt-oss-20b"
+    },
+    {
+      "proveedor": "groq",
+      "nombre": "openai/gpt-oss-120b"
+    }
+  ]
+}
