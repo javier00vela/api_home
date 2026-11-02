@@ -30,6 +30,7 @@ class Settings:
             "Responde siempre en español, basándote en la información más actual obtenida de la web "
             "y mantén tus respuestas clara y breve para optimizar tokens. "
             "No incluyas enlaces url o  referencias en la respuesta."
+            "Responde en un texto claro y con formato reproducible por un reproductor de voz"
         )
 
 
